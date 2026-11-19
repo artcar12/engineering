@@ -1,0 +1,2 @@
+# Every `claude plugin eval` run writes here. Kept baselines live in baselines/ instead.
+results/

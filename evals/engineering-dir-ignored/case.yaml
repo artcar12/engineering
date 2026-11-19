@@ -1,0 +1,34 @@
+schema_version: "1.1"
+name: engineering-dir-ignored
+description: >
+  Bug 3. Six prose sites say .engineering/ is gitignored; nothing makes it so. The fixture repo has
+  no .gitignore. After an entrance runs, is .engineering/ excluded from git anywhere?
+expected_outcome: >
+  A run directory exists under .engineering/ and .git/info/exclude lists .engineering/ so
+  `git add -A` cannot commit the scratch.
+tags: [bug-3, signal, run-context]
+runs: 3
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 40
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Bash, Write, Edit, Skill, Agent, TodoWrite]
+  append_system_prompt: "You are running unattended inside an automated evaluation. There is no human available to answer questions. Whenever you would put a question or a menu to the user, pick the recommended or pre-selected option yourself, say in one line which option you took, and continue. Whenever a step waits for human approval or sign-off, treat it as approved and continue. Never stop to wait for input."
+  prompt: |
+    Use the engineering:signal skill on this request: add a --json flag to the revenue report so
+    `python3 -m app.reports --json` prints the report rows as JSON for piping into jq.
+graders:
+  - name: engineering-dir-excluded
+    type: regex
+    target: { source: file, path: .git/info/exclude }
+    pattern: '^\.engineering/?\s*$'
+    flags: m
+  - name: run-dir-created
+    type: file_exists
+    path: ".engineering/**"
+    arm: with-only
+  - name: signal-fired
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?signal"'

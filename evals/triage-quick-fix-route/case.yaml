@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: triage-quick-fix-route
+description: >
+  Bug 2. brainstorming says a triage quick fix may skip it; triage says there is no quick-fix side
+  door and everything converges on brainstorming. An obvious one-line bug with a failing test is
+  the exact input where the two rules disagree. Before the fix, expect the route to vary across runs.
+expected_outcome: >
+  Every run takes the same route after triage, and none justifies skipping design by citing a
+  quick-fix exception.
+tags: [bug-2, triage, brainstorming]
+runs: 3
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 40
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Bash, Write, Edit, Skill, Agent, TodoWrite]
+  append_system_prompt: "You are running unattended inside an automated evaluation. There is no human available to answer questions. Whenever you would put a question or a menu to the user, pick the recommended or pre-selected option yourself, say in one line which option you took, and continue. Whenever a step waits for human approval or sign-off, treat it as approved and continue. Never stop to wait for input."
+  prompt: |
+    Bug report: total_cents() in app/orders.py adds the discount instead of subtracting it, so a
+    $10.00 order with a $3.00 discount is billed $13.00. `python3 -m unittest -q` fails on
+    test_discount_is_subtracted and test_total_never_negative in tests/test_orders.py. Please fix it.
+graders:
+  - name: one-consistent-route
+    type: llm
+    focus: trace
+    criteria: |
+      You are judging how the assistant routed a reported bug through a design step.
+      PASS if either holds: (a) after investigating the defect the assistant invoked the
+      engineering:brainstorming skill (a Skill tool call naming brainstorming) before editing any
+      code; or (b) the assistant never invoked brainstorming AND never cited a "quick fix" exception,
+      exemption, or shortcut as its reason for skipping design.
+      FAIL if the assistant justified skipping brainstorming (or design) by citing a quick-fix
+      exception or rule, or if it stated that one route was required and then took the other.
+  - name: discount-fixed
+    type: regex
+    target: { source: file, path: app/orders.py }
+    pattern: 'subtotal\s*-\s*discount'
+  - name: triage-fired
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?triage"'
+  - name: brainstorming-invoked
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?brainstorming"'

@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: dangling-skill-refs
+description: >
+  Bug 1. code-review/SKILL.md tells the orchestrator to follow `dispatching-parallel-agents` when
+  fanning out and to mirror `executing-plans` for todos. Neither skill exists (they are
+  using-parallel-agents and build). A >20-line, two-file branch diff forces the fan-out path.
+expected_outcome: >
+  The review completes without the agent trying to invoke either missing skill and without a
+  skill-not-found error in the trace.
+tags: [bug-1, code-review]
+runs: 3
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 40
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Bash, Write, Edit, Skill, Agent, TodoWrite]
+  append_system_prompt: "You are running unattended inside an automated evaluation. There is no human available to answer questions. Whenever you would put a question or a menu to the user, pick the recommended or pre-selected option yourself, say in one line which option you took, and continue. Whenever a step waits for human approval or sign-off, treat it as approved and continue. Never stop to wait for input."
+  prompt: |
+    Use the engineering:code-review skill at medium effort to review the current branch
+    (feature/tenant-report, against main). Run the pre-filled facet set and report the findings locally.
+graders:
+  - name: never-invokes-dispatching-parallel-agents
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?dispatching-parallel-agents"'
+    min: 0
+    max: 0
+    arm: both
+  - name: never-invokes-executing-plans
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?executing-plans"'
+    min: 0
+    max: 0
+    arm: both
+  - name: no-unknown-skill-error
+    type: regex
+    target: trace
+    pattern: '(?:[Uu]nknown skill|not found|[Nn]o such skill|does not exist|not available)[^\n]{0,80}(?:dispatching-parallel-agents|executing-plans)|(?:dispatching-parallel-agents|executing-plans)[^\n]{0,80}(?:not found|[Uu]nknown|does not exist|no such|not available)'
+    match: not_contains
+  - name: code-review-fired
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?code-review"'

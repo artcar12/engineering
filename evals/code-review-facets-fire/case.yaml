@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: code-review-facets-fire
+description: >
+  Positive control: the part of the plugin that works. The branch adds a report with an obvious
+  N+1 (one customer lookup per order) and a query that dropped its tenant_id scope in a shared-schema
+  multi-tenant app. Low effort, so each facet returns only its strongest findings.
+expected_outcome: >
+  Facet reviewers fan out as subagents, the report names the N+1 and the missing tenant scope, and
+  the technical facet leaves its findings artifact under .engineering/.
+tags: [positive-control, code-review]
+runs: 3
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 40
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Bash, Write, Edit, Skill, Agent, TodoWrite]
+  append_system_prompt: "You are running unattended inside an automated evaluation. There is no human available to answer questions. Whenever you would put a question or a menu to the user, pick the recommended or pre-selected option yourself, say in one line which option you took, and continue. Whenever a step waits for human approval or sign-off, treat it as approved and continue. Never stop to wait for input."
+  prompt: |
+    Use the engineering:code-review skill at low effort to review the current branch
+    (feature/tenant-report, against main). Run the pre-filled facet set and report the findings locally.
+graders:
+  - name: fans-out-reviewers
+    type: tool_used
+    tool: Agent
+    min: 2
+  - name: flags-n-plus-one
+    type: regex
+    target: last_message
+    pattern: 'N\s*\+\s*1|one (query|lookup) per (order|row)|per-order (query|lookup)|query in a loop|inside the loop'
+    flags: i
+  - name: flags-missing-tenant-scope
+    type: regex
+    target: last_message
+    pattern: 'tenant'
+    flags: i
+  - name: technical-findings-artifact
+    type: file_exists
+    path: ".engineering/**/reviewing-technical/findings.md"
+    arm: with-only
+  - name: code-review-fired
+    type: tool_used
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?code-review"'

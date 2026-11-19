@@ -1,0 +1,38 @@
+engineering 0.30.0
+  Description: Full software-development pipeline: discover, triage, or receive code review, then shape the design, spec, plan, build with TDD, and harden docs — file-based, no tracker.
+  Source: engineering@inline
+
+Component inventory
+  Skills (19)  brainstorming, build, code-review, documenting, finish, plan, receiving-code-review, refusing-deferral, signal, spec, triage, using-codebase-design, using-diagrams, using-documentation, using-parallel-agents, using-questions, using-skills, using-stacked-pull-requests, using-verification
+  Agents (0)
+  Hooks (1)  SessionStart  (harness-only — no model context cost)
+  MCP servers (0)
+  LSP servers (0)
+
+Projected token cost
+  Always-on:   ~2,243 tok   added to every session
+
+Per-component (rounded)
+  component                    always-on  on-invoke
+  using-diagrams                    ~110        ~2k
+  using-questions                   ~130      ~2.3k
+  using-codebase-design             ~130      ~4.3k
+  refusing-deferral                 ~130      ~2.1k
+  plan                               ~90      ~6.4k
+  documenting                       ~170        ~2k
+  code-review                       ~150        ~6k
+  spec                              ~140      ~3.1k
+  triage                            ~100      ~1.7k
+  brainstorming                     ~140      ~3.3k
+  finish                            ~110      ~2.7k
+  using-stacked-pull-requests       ~140      ~2.1k
+  using-skills                       ~50      ~1.5k
+  using-verification                 ~70      ~1.3k
+  receiving-code-review             ~130      ~2.4k
+  build                              ~80      ~3.5k
+  using-documentation               ~200      ~1.7k
+  using-parallel-agents             ~100      ~2.1k
+  signal                            ~100       ~820
+
+  On-invoke cost is paid each time a skill or agent fires.
+  Token counts are estimates and may differ from actual usage.
